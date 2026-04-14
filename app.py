@@ -15,4 +15,3 @@ with st.sidebar:
 
 res = run_calculation(work_volume, coil_dist, b_target, rho, wire_dia, di_dt, mu, n_turns)
 st.json(res)
-
