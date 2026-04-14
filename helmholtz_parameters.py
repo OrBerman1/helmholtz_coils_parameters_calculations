@@ -5,6 +5,45 @@ import numpy as np
 POWER_THRESH = 500
 
 
+def calculate_i(b_target, radius, mu, n_turns):
+    coeff = (4 / 5) ** 1.5
+    current_i = (b_target * radius) / (coeff * mu * n_turns)
+    return current_i
+
+
+def calculate_resistance(wire_dia, n_turns, radius, rho):
+    area = np.pi * (wire_dia / 2) ** 2
+    length = 2 * n_turns * (2 * np.pi * radius)
+    r_coil = rho * (length / area)
+    return r_coil
+
+
+def calculate_voltage(mu, n_turns, radius, current_i, r_coil, di_dt):
+    l_inductance = (mu * np.pi * n_turns ** 2 * radius ** 2) / (radius / 10)    # radius / 10 is very not accurate
+    voltage_v = (current_i * r_coil) + (l_inductance * di_dt)
+    if di_dt != 0:
+        print("WARNING: voltage calculation is not accurate due to coil length not being calculated directly."
+              " please see calculate_voltage for more info")
+    return voltage_v
+
+
+def calculate_power(current_i, r_coil, radius, n_turns, wire_dia):
+    power = (current_i ** 2) * r_coil
+    surface_area = 2 * (2 * np.pi * radius * (n_turns * wire_dia))
+    power_density = power / surface_area
+    return power, power_density
+
+
+def calculate_error(coil_dist, mu, n_turns, current_i, radius, work_volume, b_target):
+    a = coil_dist / 2
+    k = (mu * n_turns * current_i * radius ** 2) / 2
+    deriv_4 = -666 * k * a ** 4 / (radius ** 2 + a ** 2) ** 5.5
+    z_max = work_volume / 2
+    error_tesla = abs(deriv_4 / 24 * z_max ** 4)
+    error_percent = (error_tesla / b_target) * 100
+    return error_percent
+
+
 def calculate_coil_system(
         work_volume=0.1, coil_dist=0.1, b_target=1e-4,
         rho=1.68e-8, wire_dia=0.4e-3, di_dt=0.0,
@@ -17,26 +56,11 @@ def calculate_coil_system(
         return {"error": "Geometric Error: Coil distance is smaller than work volume!"}
 
     radius = coil_dist / 2
-    coeff = (4 / 5) ** 1.5
-    current_i = (b_target * radius) / (coeff * mu * n_turns)
-
-    area = np.pi * (wire_dia / 2) ** 2
-    length = 2 * n_turns * (2 * np.pi * radius)
-    r_coil = rho * (length / area)
-
-    l_inductance = (mu * np.pi * n_turns ** 2 * radius ** 2) / (radius / 10)
-    voltage_v = (current_i * r_coil) + (l_inductance * di_dt)
-
-    power = (current_i ** 2) * r_coil
-    surface_area = 2 * (2 * np.pi * radius * (n_turns * wire_dia))
-    power_density = power / surface_area
-
-    a = coil_dist / 2
-    k = (mu * n_turns * current_i * radius ** 2) / 2
-    deriv_4 = -666 * k * a ** 4 / (radius ** 2 + a ** 2) ** 5.5
-    z_max = work_volume / 2
-    error_tesla = abs(deriv_4 / 24 * z_max ** 4)
-    error_percent = (error_tesla / b_target) * 100
+    current_i = calculate_i(b_target, radius, mu, n_turns)
+    r_coil = calculate_resistance(wire_dia, n_turns, radius, rho)
+    voltage_v = calculate_voltage(mu, n_turns, radius, current_i, r_coil, di_dt)
+    power, power_density = calculate_power(current_i, r_coil, radius, n_turns, wire_dia)
+    error_percent = calculate_error(coil_dist, mu, n_turns, current_i, radius, work_volume, b_target)
 
     return {
         "current_a": current_i,
@@ -62,7 +86,7 @@ if __name__ == "__main__":
     parser.add_argument("--wire_dia", type=float, default=0.4e-3, help="Wire diameter (meters)")
     parser.add_argument("--di_dt", type=float, default=0.0, help="Current change rate (Amps/sec)")
     parser.add_argument("--mu", type=float, default=4 * np.pi * 1e-7, help="Permeability of medium")
-    parser.add_argument("--n_turns", type=int, default=100, help="Number of turns per coil")
+    parser.add_argument("--n_turns", type=int, default=20, help="Number of turns per coil")
 
     args = parser.parse_args()
 
