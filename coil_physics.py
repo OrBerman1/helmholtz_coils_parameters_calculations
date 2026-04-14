@@ -25,7 +25,7 @@ def calculate_power(current_i, r_coil, radius, n_turns, wire_dia):
 
 
 def run_calculation(work_volume, coil_dist, b_target, rho, wire_dia, di_dt, mu, n_turns, radius):
-    if coil_dist < work_volume:
+    if coil_dist < work_volume - 0.000001:
         return {"error": "Geometric Error: Coil distance is smaller than work volume!"}
     is_helmholtz = np.isclose(coil_dist, radius, atol=1e-3)
     current_i = calculate_i_general(b_target, radius, mu, n_turns, coil_dist)
