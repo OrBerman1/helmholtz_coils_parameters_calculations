@@ -1,13 +1,6 @@
 import numpy as np
 
 
-def check_deviation(radius, n_turns, b_target, mu):
-    # Old Helmholtz coefficient
-    coeff = (4 / 5) ** 1.5
-    i_old = (b_target * radius) / (coeff * mu * n_turns)
-    return i_old
-
-
 def calculate_i_general(b_target, radius, mu, n_turns, coil_dist):
     z = coil_dist / 2
     b_single_per_amp = (mu * n_turns * radius ** 2) / (2 * (radius ** 2 + z ** 2) ** 1.5)
@@ -34,7 +27,6 @@ def calculate_power(current_i, r_coil, radius, n_turns, wire_dia):
 def run_calculation(work_volume, coil_dist, b_target, rho, wire_dia, di_dt, mu, n_turns, radius):
     if coil_dist < work_volume:
         return {"error": "Geometric Error: Coil distance is smaller than work volume!"}
-    print(f"deviation check: {check_deviation(radius, n_turns, b_target, mu)}")
     is_helmholtz = np.isclose(coil_dist, radius, atol=1e-3)
     current_i = calculate_i_general(b_target, radius, mu, n_turns, coil_dist)
     r_coil = calculate_resistance(wire_dia, n_turns, radius, rho)
