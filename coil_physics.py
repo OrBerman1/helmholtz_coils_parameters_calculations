@@ -42,8 +42,38 @@ def calculate_field_error(coil_dist, radius, b_target, work_volume, mu, n_turns,
         return abs(deriv_2 / 2 * z_max ** 2) / b_target * 100
 
 
+def calculate_wire_length(n_turns, radius):
+    """
+    Calculates the total wire length for both coils.
+    Formula: 2 * (Number of turns per coil) * (Circumference of one turn)
+    """
+    # Circumference of one turn: 2 * pi * R
+    circumference = 2 * np.pi * radius
+
+    # Total length for two coils
+    total_length = 2 * n_turns * circumference
+
+    return total_length
+
+
+def calculate_field_at_coil_center(mu, n_turns, current_i, radius, coil_dist, b_target):
+    """
+    Calculates the absolute magnetic field strength at the center of one of the coils.
+    This includes the contribution from the coil itself and the second, distant coil.
+    """
+    # Contribution from the coil itself (at its own center)
+    b_self = (mu * n_turns * current_i) / (2 * radius)
+
+    # Contribution from the other coil (at distance d)
+    b_from_far_coil = (mu * n_turns * current_i * radius ** 2) / (2 * (radius ** 2 + coil_dist ** 2) ** 1.5)
+
+    # total_b_at_coil = np.abs(b_self + b_from_far_coil - b_target)
+    total_b_at_coil = b_self + b_from_far_coil
+    return total_b_at_coil
+
+
 def run_calculation(work_volume, coil_dist, b_target, rho, wire_dia, di_dt, mu, n_turns, radius):
-    if coil_dist < work_volume - 0.000001:
+    if coil_dist < work_volume - 0.000000001:
         return {"error": "Geometric Error: Coil distance is smaller than work volume!"}
     is_helmholtz = np.isclose(coil_dist, radius, atol=1e-3)
     current_i = calculate_i_general(b_target, radius, mu, n_turns, coil_dist)
@@ -51,9 +81,13 @@ def run_calculation(work_volume, coil_dist, b_target, rho, wire_dia, di_dt, mu, 
     voltage_v = calculate_voltage(mu, n_turns, radius, current_i, r_coil, di_dt)
     power, p_density = calculate_power(current_i, r_coil, radius, n_turns, wire_dia)
     error = calculate_field_error(coil_dist, radius, b_target, work_volume, mu, n_turns, current_i, is_helmholtz)
+    total_wire_length = calculate_wire_length(n_turns, radius)
+    total_b_at_coil = calculate_field_at_coil_center(mu, n_turns, current_i, radius, coil_dist, b_target)
 
     return {
         "is_helmholtz": is_helmholtz, "current_a": current_i, "voltage_v": voltage_v,
         "resistance_ohm": r_coil, "power_w": power, "power_density_w_m2": p_density,
-        "max_error_percent": error
+        "max_error_percent": error,
+        "total_wire_length_m": total_wire_length,
+        "total_b_at_coil": total_b_at_coil
     }

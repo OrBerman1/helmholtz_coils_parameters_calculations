@@ -1,6 +1,6 @@
 import argparse
 import numpy as np
-from coil_physics import run_calculation, check_deviation
+from coil_physics import run_calculation
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -26,7 +26,6 @@ if __name__ == "__main__":
     for key, value in res.items():
         if key != "warning":
             print(f"{key.replace('_', ' ').title()}: {value}")
-
 
     # Explicitly print the warning if present
     if "warning" in res:
