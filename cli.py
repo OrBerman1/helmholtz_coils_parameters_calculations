@@ -1,6 +1,26 @@
 import argparse
 import numpy as np
 from coil_physics import run_calculation
+import matplotlib.pyplot as plt
+
+
+def plot_graph_cli(graph_data):
+    z = graph_data["z_axis"]
+    b = graph_data["b_values_ut"]
+    coils = graph_data["coil_positions"]
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(z, b, label='Magnetic Field (B)', color='blue')
+
+    for pos in coils:
+        plt.axvline(x=pos, color='red', linestyle='--', alpha=0.5)
+
+    plt.title(f"Field Profile (I={graph_data['params']['I']:.3f}A)")
+    plt.xlabel("Position Z [m]")
+    plt.ylabel("Field [uT]")
+    plt.grid(True)
+    plt.show()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -24,7 +44,9 @@ if __name__ == "__main__":
     print("\n\n")
     # Print results
     for key, value in res.items():
-        if key != "warning":
+        if key == "graph_data":
+            plot_graph_cli(value)
+        elif key != "warning":
             print(f"{key.replace('_', ' ').title()}: {value}")
 
     # Explicitly print the warning if present

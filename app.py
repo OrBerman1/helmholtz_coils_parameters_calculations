@@ -1,6 +1,31 @@
 import streamlit as st
 import numpy as np
 from coil_physics import run_calculation
+import plotly.graph_objects as go
+
+
+def display_graph_streamlit(graph_data):
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=graph_data["z_axis"],
+        y=graph_data["b_values_ut"],
+        mode='lines',
+        name='B Field (uT)'
+    ))
+
+    for pos in graph_data["coil_positions"]:
+        fig.add_vline(x=pos, line_dash="dash", line_color="red")
+
+    fig.update_layout(
+        title="התפלגות השדה המגנטי לאורך הציר",
+        xaxis_title="מיקום (מטרים)",
+        yaxis_title="עוצמת שדה (uT)",
+        template="plotly_white"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
 
 st.title("Coil System Calculator")
 
@@ -24,5 +49,8 @@ else:
     # Display the warning prominently if it exists
     if "warning" in res:
         st.warning(res["warning"])
+    graph_data = res["graph_data"]
+    res.pop("graph_data")
 
     st.json(res)
+    display_graph_streamlit(graph_data)
