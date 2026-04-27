@@ -11,3 +11,6 @@ python3 cli.py --param1 value 1 --param2 value 2 ...
 
 To run the code using the user interface run:
 streamlit run app.py
+
+Access to UI can also be done via the link: https://helmholtzcoilparameterscalculation.streamlit.app/
+This access does not require anything but pressing the link
