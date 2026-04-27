@@ -27,6 +27,7 @@ def display_graph_streamlit(graph_data):
     st.plotly_chart(fig, use_container_width=True)
 
 
+@st.cache_data
 def generate_xy_slice_object(z_offset, radius, coil_dist, n_turns, current_i, mu, res=40):
     span = radius
     grid = np.linspace(-span, span, res)
